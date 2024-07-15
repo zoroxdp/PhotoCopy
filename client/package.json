@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "merge-images": "^2.0.0",
     "react": "^18.3.1",
+    "react-combine-image": "^0.1.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
