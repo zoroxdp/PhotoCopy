@@ -2,10 +2,12 @@ import { useRef, useEffect } from 'react';
 
 function ImageBlender({ imageSources }) {
   const canvasRef = useRef(null);
-  const images = imageSources || [];
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const loadImage = (src) => {
       return new Promise((resolve, reject) => {
@@ -23,19 +25,57 @@ function ImageBlender({ imageSources }) {
 
     const mergeImages = async () => {
       try {
-        const loadedImages = await loadImages(images);
+        const loadedImages = await loadImages(imageSources);
+        if (loadedImages.length === 0) return;
 
-        ctx.drawImage(loadedImages[0], 0, 0, canvas.width, canvas.height);
-        let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        let mergedData = new Uint8ClampedArray(imageData.data);
+        const offScreenCanvas = document.createElement('canvas');
+        offScreenCanvas.width = canvas.width;
+        offScreenCanvas.height = canvas.height;
+        const offScreenCtx = offScreenCanvas.getContext('2d');
 
-        for (let i = 1; i < loadedImages.length; i++) {
-          ctx.drawImage(loadedImages[i], 0, 0, canvas.width, canvas.height);
-          let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const imageDataArray = [];
+
+        loadedImages.forEach((img, index) => {
+          offScreenCtx.clearRect(0, 0, offScreenCanvas.width, offScreenCanvas.height);
+          offScreenCtx.drawImage(img, 0, 0, offScreenCanvas.width, offScreenCanvas.height);
+          imageDataArray[index] = offScreenCtx.getImageData(0, 0, offScreenCanvas.width, offScreenCanvas.height).data;
+        });
+
+        let mergedData = new Uint8ClampedArray(imageDataArray[0].length).fill(255);
+        let count = new Uint8ClampedArray(imageDataArray[0].length / 4).fill(0);
+
+        for (let i = 0; i < imageDataArray.length; i++) {
           for (let j = 0; j < mergedData.length; j += 4) {
-            mergedData[j] = (mergedData[j] + imgData.data[j]) / 2; // Red
-            mergedData[j + 1] = (mergedData[j + 1] + imgData.data[j + 1]) / 2; // Green
-            mergedData[j + 2] = (mergedData[j + 2] + imgData.data[j + 2]) / 2; // Blue
+            if (imageDataArray[i][j + 3] > 0) {
+              count[j / 4]++;
+              if (count[j / 4] === 1) {
+                mergedData[j] = imageDataArray[i][j];
+                mergedData[j + 1] = imageDataArray[i][j + 1];
+                mergedData[j + 2] = imageDataArray[i][j + 2];
+                mergedData[j + 3] = 255;
+              }
+            }
+          }
+        }
+
+        for (let j = 0; j < mergedData.length; j += 4) {
+          let sumR = 0, sumG = 0, sumB = 0;
+          let overlapCount = 0;
+
+          for (let i = 0; i < imageDataArray.length; i++) {
+            if (imageDataArray[i][j + 3] > 0) {
+              sumR += imageDataArray[i][j];
+              sumG += imageDataArray[i][j + 1];
+              sumB += imageDataArray[i][j + 2];
+              overlapCount++;
+            }
+          }
+
+          if (overlapCount > 1) {
+            mergedData[j] = sumR / overlapCount;
+            mergedData[j + 1] = sumG / overlapCount;
+            mergedData[j + 2] = sumB / overlapCount;
+            mergedData[j + 3] = 255;
           }
         }
 
@@ -44,13 +84,11 @@ function ImageBlender({ imageSources }) {
         console.error('Error loading images:', error);
       }
     };
-
     mergeImages();
-  }, [images]);
-
+  }, [imageSources]);
   return (
     <div className="App">
-      <canvas ref={canvasRef} className="w-36 h-36" />
+      <canvas ref={canvasRef} className="w-36 h-36 rounded-full " />
     </div>
   );
 }

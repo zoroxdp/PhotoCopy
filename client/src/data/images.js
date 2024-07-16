@@ -1,0 +1,6 @@
+export const BlueLight = ['/BlueLight1.svg', '/BlueLight2.svg', '/BlueLight3.svg', '/BlueLight4.svg']
+export const YellowLight = ['/YellowLight1.svg', '/YellowLight2.svg', '/YellowLight3.svg', '/YellowLight4.svg']
+export const PinkLight = ['/PinkLight1.svg', '/PinkLight2.svg', '/PinkLight3.svg', '/PinkLight4.svg']
+export const Blue = ['/Blue1.svg', '/Blue2.svg', '/Blue3.svg', '/Blue4.svg']
+export const Yellow = ['/Yellow1.svg', '/Yellow2.svg', '/Yellow3.svg', '/Yellow4.svg']
+export const Pink = ['/Pink1.svg', '/Pink2.svg', '/Pink3.svg', '/Pink4.svg']
