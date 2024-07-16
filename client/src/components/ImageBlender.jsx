@@ -1,8 +1,16 @@
 import { useRef, useEffect } from 'react';
+import { YellowLight, PinkLight, BlueLight } from '../data/images';
 
-function ImageBlender({ imageSources }) {
+
+function ImageBlender({ selected }) {
   const canvasRef = useRef(null);
   useEffect(() => {
+    const imageSources = [];
+    console.log(selected);
+    if (selected[0] != 0) imageSources.push(YellowLight[selected[0] - 1]);
+    if (selected[1] != 0) imageSources.push(PinkLight[selected[1] - 1]);
+    if (selected[2] != 0) imageSources.push(BlueLight[selected[2] - 1]);
+    console.log(imageSources);
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
 
@@ -85,7 +93,7 @@ function ImageBlender({ imageSources }) {
       }
     };
     mergeImages();
-  }, [imageSources]);
+  }, [selected]);
   return (
     <div className="App">
       <canvas ref={canvasRef} className="w-36 h-36 rounded-full " />
