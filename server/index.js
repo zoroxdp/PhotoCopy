@@ -15,8 +15,9 @@ io.on("connection", (socket) => {
   };
 
   socket.on("request_to_play", (data) => {
-    const player1 = allUsers[socket.id];
-    player1.name = data.name;
+    const player1 = allPlayers[socket.id];
+    player1.name = data.playerName;
+    console.log(player1.name);
 
     let player2;
 
@@ -27,6 +28,7 @@ io.on("connection", (socket) => {
         break;
       }
     }
+    // console.log(player2);
 
     if (player2) {
       allRooms.push({
@@ -34,22 +36,23 @@ io.on("connection", (socket) => {
         player2: player2
       });
 
+      player1.playing = true;
+      player2.playing = true;
 
       player1.socket.emit("OpponentFound", {
         opponentName: player2.name,
-        playerAs: "P1",
-        Points: 0,
+        role: "R1"
       })
 
       player2.socket.emit("OpponentFound", {
         opponentName: player1.name,
-        playerAs: "P2",
-        Points: 0,
+        role: "R2"
       })
 
       player1.socket.on("playerMoveFromClient", (data) => {
         player2.socket.on("playerMoveFromServer", { ...data });
       });
+
     } else {
       player1.socket.emit("OpponentNotFound");
     }
