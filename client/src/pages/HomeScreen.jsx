@@ -11,7 +11,7 @@ const HomeScreen = () => {
   const [playerName, setPlayerName] = useRecoilState(nameAtom);
   const [opponentName, setOpponentName] = useRecoilState(opponentNameAtom);
   const [socket, setSocket] = useState(null);
-  const [playerOnline, setPlayerOnline] = useState(false);
+  const [gameOn, setGameOn] = useState(false);
   const [role, setRole] = useState('');
   const [finishedState, setFinishedState] = useState('');
 
@@ -73,7 +73,8 @@ const HomeScreen = () => {
   };
 
   const game = () => {
-    console.log(playerName)
+    console.log(role, playerName);
+    setGameOn(true);
     if (role === "R1") {
       navigate('/draw');
     } else {
@@ -81,14 +82,19 @@ const HomeScreen = () => {
     }
   };
 
-  return (
-    <div className="flex justify-center">
-      <div className="flex flex-col justify-center">
-        <img src="/Logo.png" className="w-64 mb-4" alt="logo" />
-        <Button onClick={playButton} variant="outlined">Play</Button>
+  if (!gameOn) {
+    return (
+      <div className="flex justify-center">
+        <div className="flex flex-col justify-center">
+          <img src="/Logo.png" className="w-64 mb-4" alt="logo" />
+          <Button onClick={playButton} variant="outlined">Play</Button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+  else {
+    return <div className="text-white">Hello</div>;
+  }
 }
 
 export default HomeScreen;

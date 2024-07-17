@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { RecoilRoot } from 'recoil';
 import DrawScreen from './pages/DrawScreen';
-import GuessScreen from './pages/GuessScreen';
+import CopyScreen from './pages/CopyScreen';
 import HomeScreen from './pages/HomeScreen';
 
 export default function App() {
@@ -12,7 +12,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomeScreen />} />
-            <Route path="/guess" element={<GuessScreen />} />
+            <Route path="/guess" element={<CopyScreen />} />
             <Route path="/draw" element={<DrawScreen />} />
           </Routes>
         </BrowserRouter >

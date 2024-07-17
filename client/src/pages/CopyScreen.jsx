@@ -1,12 +1,24 @@
-import { useState } from 'react';
-import { useRecoilState } from 'recoil';
-import { stateAtom } from '../data/atoms';
+import { useEffect, useState } from 'react';
+import { useRecoilState, useRecoilValue } from 'recoil';
+import { stateAtom, opponentNameAtom } from '../data/atoms';
 import { Yellow, YellowLight, Blue, BlueLight, Pink, PinkLight } from '../data/images'
 import ImageBlender from '../components/ImageBlender';
-const GuessScreen = () => {
+
+const CopyScreen = () => {
 
   const [state, setState] = useRecoilState(stateAtom);
+  const opponentName = useRecoilValue(opponentNameAtom);
   const [layer, setLayer] = useState(0);
+  const [isComplete, setComplete] = useState(false);
+
+  useEffect(() => {
+    console.log(state);
+    if (state[0] !== 0 && state[1] !== 0 && state[2] !== 0) {
+      setComplete(true);
+    } else {
+      setComplete(false);
+    }
+  }, [state]);
 
   const select = (type, id) => {
     if (state[type] === id) {
@@ -25,6 +37,10 @@ const GuessScreen = () => {
       setState(newState);
     }
   };
+
+  const submit = () => {
+    console.log("Hello");
+  }
 
   const renderShapes = () => {
     const shapesList = [];
@@ -58,19 +74,20 @@ const GuessScreen = () => {
   return (
     <div className="flex justify-center">
       <div className="flex flex-col justify-center items-center">
-        <div className="text-4xl text-center text-white">Guess </div>
+        <div className="text-4xl text-center text-white">Copy It...</div>
         <div className="flex justify-center my-8">
           <div className="border h-38 w-38 p-2"><ImageBlender state={state} /></div>
           <img className="h-24 w-14 mt-6" src={`/L${layer}.svg`} alt="level" />
-          <div className="border h-38 w-38 p-2"><ImageBlender state={state} /></div>
+          <div className="border h-38 w-38 p-2 ml"><ImageBlender state={state} /></div>
         </div>
         <div className="grid grid-cols-4 my-2">
           {renderShapes()}
         </div>
+        <img src="/Submit.svg" className={`mt-4 w-16 h-16 ${isComplete ? 'visible' : 'invisible'}`} onClick={submit} />
       </div>
     </div
     >
   )
 }
 
-export default GuessScreen;
+export default CopyScreen;
