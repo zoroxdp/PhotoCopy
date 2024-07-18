@@ -60,7 +60,7 @@ const DrawScreen = ({ socket }) => {
           </div>
           <div className="flex justify-center items-center gap-x-24">
             <div className="text-4xl text-center text-white">You: {score}</div>
-            <div className="text-4xl text-center text-white">{opponentName}: {opponentScore}</div>
+            <div className="text-4xl text-center text-white">{opponentScore} :{opponentName}</div>
           </div>
           <img src="/Submit.svg" className={`mt-4 mx-10 w-16 h-16 ${isComplete ? 'visible' : 'invisible'}`} onClick={submitState} />
         </div>

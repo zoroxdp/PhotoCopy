@@ -36,6 +36,11 @@ const CopyScreen = ({ socket }) => {
     setState(newState);
   };
 
+  const fail = () => {
+    socket.emit("Result", { res: false });
+    setRes(true);
+  }
+
   const submitState = () => {
     const isMatch = opponentState.toString() === state.toString();
     socket.emit("Result", { res: isMatch });
@@ -75,6 +80,7 @@ const CopyScreen = ({ socket }) => {
                 colorsTime={[30, 20, 10, 0]}
                 size={80}
                 strokeWidth={8}
+                onComplete={fail}
               >
                 {({ remainingTime }) => <div className="text-4xl text-center text-white">{remainingTime}</div>}
               </CountdownCircleTimer>
@@ -91,7 +97,7 @@ const CopyScreen = ({ socket }) => {
             </div>
             <div className="flex justify-center items-center gap-x-24">
               <div className="text-4xl text-center text-white">You: {score}</div>
-              <div className="text-4xl text-center text-white">{opponentName}: {opponentScore}</div>
+              <div className="text-4xl text-center text-white">{opponentScore} :{opponentName}</div>
             </div>
             <img src="/Submit.svg" className={`mt-4 w-16 h-16 ${isComplete ? 'visible' : 'invisible'}`} onClick={submitState} />
           </>
