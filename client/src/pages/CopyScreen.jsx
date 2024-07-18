@@ -1,129 +1,106 @@
 import { useEffect, useState } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
-import { DotLottieReact } from "@lottiefiles/dotlottie-react"
-import Swal from 'sweetalert2';
-import { stateAtom, opponentNameAtom, opponentStateAtom, opponentScoreAtom, scoreAtom } from '../data/atoms';
-import { Yellow, YellowLight, Blue, BlueLight, Pink, PinkLight } from '../data/images'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { CountdownCircleTimer } from 'react-countdown-circle-timer';
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import { stateAtom, opponentNameAtom, opponentStateAtom, opponentScoreAtom, scoreAtom, resAtom } from '../data/atoms';
+import { Yellow, YellowLight, Blue, BlueLight, Pink, PinkLight } from '../data/images';
 import ImageBlender from '../components/ImageBlender';
 
 const CopyScreen = ({ socket }) => {
-
   const [state, setState] = useRecoilState(stateAtom);
   const opponentName = useRecoilValue(opponentNameAtom);
+  const setRes = useSetRecoilState(resAtom);
   const opponentState = useRecoilValue(opponentStateAtom);
-  const [opponentScore, setOpponentScore] = useRecoilState(opponentScoreAtom);
-  const [score, setScore] = useRecoilState(scoreAtom);
-  const [received, setReceived] = useState(false);
+  const opponentScore = useRecoilValue(opponentScoreAtom);
+  const score = useRecoilValue(scoreAtom);
+  const [isReceived, setIsReceived] = useState(false);
   const [layer, setLayer] = useState(0);
-  const [isComplete, setComplete] = useState(false);
-  const [skipCount, setSkipCount] = useState(true);
+  const [isComplete, setIsComplete] = useState(false);
+  const [wait, setWait] = useState(false);
 
   useEffect(() => {
-    if (skipCount) setSkipCount(false);
-    if (!skipCount) setReceived(true);
+    if (opponentState.every(layer => layer !== 0)) {
+      setIsReceived(true);
+      setTimeout(() => setWait(true), 2000);
+    }
   }, [opponentState]);
 
   useEffect(() => {
-    if (state[0] !== 0 && state[1] !== 0 && state[2] !== 0) {
-      setComplete(true);
-    } else {
-      setComplete(false);
-    }
+    setIsComplete(state.every(layer => layer !== 0));
   }, [state]);
 
-  const select = (type, id) => {
-    if (state[type] === id) {
-      const newState = [...state];
-      newState[type] = 0;
-      setLayer(layer - 1);
-      setState(newState);
-    } else if (state[type] === 0) {
-      const newState = [...state];
-      newState[type] = id;
-      setLayer(layer + 1);
-      setState(newState);
-    } else {
-      const newState = [...state];
-      newState[type] = id;
-      setState(newState);
-    }
+  const selectShape = (type, id) => {
+    const newState = [...state];
+    newState[type] = state[type] === id ? 0 : id;
+    setLayer(layer + (state[type] === 0 ? 1 : -1));
+    setState(newState);
   };
 
-  const submit = () => {
-    const flag = opponentState.toString() == state.toString();
-    if (flag === true) {
-      socket.socket.emit("Result", { res: true })
-      setScore(score + 1);
-      Swal.fire({
-        title: "You got it right",
-        icon: "success"
-      });
-    } else {
-      socket.socket.emit("Result", { res: false })
-      setOpponentScore(opponentScore + 1);
-      Swal.fire({
-        title: "You got it wrong",
-        icon: "error"
-      })
-    }
-  }
+  const submitState = () => {
+    const isMatch = opponentState.toString() === state.toString();
+    socket.emit("Result", { res: isMatch });
+    setRes(!isMatch);
+  };
 
-  const renderShapes = () => {
-    const shapesList = [];
-    for (let i = 0; i <= 3; i++) {
-      shapesList.push(
-        <img key={i} className={`w-20 h-20 ${state[0] === i + 1 ? 'border-4' : 'border'} p-2`}
-          src={state[0] === i + 1 || state[0] === 0 ? YellowLight[i] : Yellow[i]}
-          onClick={() => select(0, i + 1)}
-        />
-      )
-    }
-    for (let i = 0; i <= 3; i++) {
-      shapesList.push(
-        <img key={4 + i} className={`w-20 h-20 ${state[1] === i + 1 ? 'border-4' : 'border'} p-2`}
-          src={state[1] === i + 1 || state[1] === 0 ? PinkLight[i] : Pink[i]}
-          onClick={() => select(1, i + 1)}
-        />
-      )
-    }
-    for (let i = 0; i <= 3; i++) {
-      shapesList.push(
-        <img key={8 + i} className={`w-20 h-20 ${state[2] === i + 1 ? 'border-4' : 'border'} p-2`}
-          src={state[2] === i + 1 || state[2] === 0 ? BlueLight[i] : Blue[i]}
-          onClick={() => select(2, i + 1)}
-        />
-      )
-    }
-    return shapesList;
-  }
+  const renderShapes = (colors, lightColors, type) => {
+    return colors.map((color, i) => (
+      <img key={`${type}-${i}`}
+        className={`w-20 h-20 ${state[type] === i + 1 ? 'border-4' : 'border'} p-2`}
+        src={state[type] === i + 1 || state[type] === 0 ? lightColors[i] : color}
+        onClick={() => selectShape(type, i + 1)}
+      />
+    ));
+  };
 
-  if (received === true) {
+  if (!isReceived) {
     return (
-      <div className="flex justify-center">
-        <div className="flex flex-col justify-center items-center">
-          <div className="text-4xl text-center text-white">Copy It...</div>
-          <div className="flex justify-center my-8">
-            <div className="border h-38 w-38 p-2"><ImageBlender state={opponentState} /></div>
-            <img className="h-24 w-14 mt-6" src={`/L${layer}.svg`} alt="level" />
-            <div className="border h-38 w-38 p-2 ml"><ImageBlender state={state} /></div>
-          </div>
-          <div className="grid grid-cols-4 my-2">
-            {renderShapes()}
-          </div>
-          <img src="/Submit.svg" className={`mt-4 w-16 h-16 ${isComplete ? 'visible' : 'invisible'}`} onClick={submit} />
-        </div>
-      </div
-      >
-    )
-  }
-  else if (received === false) {
-    return (
-      <div className='flex flex-col justify-center items-center'>
+      <div className="flex flex-col justify-center items-center">
         <DotLottieReact className="w-48 h-48" src="/Waiting.lottie" loop autoplay />
         <div className="text-white text-4xl text-center">Wait while {opponentName} is drawing...</div>
       </div>
-    )
+    );
   }
-}
+
+  return (
+    <div className="flex justify-center">
+      <div className="flex flex-col justify-center items-center">
+        {wait ? (
+          <>
+            <div className="text-4xl text-center text-white">Copy the Drawing</div>
+            <div className="mt-6">
+              <CountdownCircleTimer
+                isPlaying
+                duration={30}
+                colors={['#80ff80', '#F7B801', '#A30000', '#A30000']}
+                colorsTime={[30, 20, 10, 0]}
+                size={80}
+                strokeWidth={8}
+              >
+                {({ remainingTime }) => <div className="text-4xl text-center text-white">{remainingTime}</div>}
+              </CountdownCircleTimer>
+            </div>
+            <div className="flex justify-center my-8">
+              <div className="border h-38 w-38 p-2"><ImageBlender state={opponentState} /></div>
+              <img className="h-24 w-14 mt-6" src={`/L${layer}.svg`} alt="level" />
+              <div className="border h-38 w-38 p-2 ml"><ImageBlender state={state} /></div>
+            </div>
+            <div className="grid grid-cols-4 my-2">
+              {renderShapes(Yellow, YellowLight, 0)}
+              {renderShapes(Pink, PinkLight, 1)}
+              {renderShapes(Blue, BlueLight, 2)}
+            </div>
+            <div className="flex justify-center items-center gap-x-24">
+              <div className="text-4xl text-center text-white">You: {score}</div>
+              <div className="text-4xl text-center text-white">{opponentName}: {opponentScore}</div>
+            </div>
+            <img src="/Submit.svg" className={`mt-4 w-16 h-16 ${isComplete ? 'visible' : 'invisible'}`} onClick={submitState} />
+          </>
+        ) : (
+          <div className="text-7xl font-bold text-white text-center">Copy</div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default CopyScreen;

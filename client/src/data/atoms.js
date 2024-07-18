@@ -32,5 +32,5 @@ export const opponentScoreAtom = atom({
 
 export const resAtom = atom({
   key: 'res',
-  default: false,
+  default: null,
 })

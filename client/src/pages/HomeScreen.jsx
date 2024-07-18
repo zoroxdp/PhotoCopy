@@ -1,25 +1,29 @@
 import { useState, useEffect } from 'react';
-import { useRecoilState } from 'recoil';
-import { nameAtom, opponentNameAtom, opponentStateAtom, resAtom } from '../data/atoms';
+import { useRecoilState, useSetRecoilState } from 'recoil';
+import { nameAtom, opponentNameAtom, opponentStateAtom, opponentScoreAtom, scoreAtom, resAtom, stateAtom } from '../data/atoms';
 import { io } from 'socket.io-client';
-import { Button } from '@mui/material';
+import { Button, CircularProgress } from '@mui/material';
 import Swal from 'sweetalert2';
 import DrawScreen from './DrawScreen';
 import CopyScreen from './CopyScreen';
 
 const HomeScreen = () => {
+  const setOpponentState = useSetRecoilState(opponentStateAtom);
+  const setState = useSetRecoilState(stateAtom);
+  const [score, setScore] = useRecoilState(scoreAtom);
   const [name, setName] = useRecoilState(nameAtom);
   const [opponentName, setOpponentName] = useRecoilState(opponentNameAtom);
-  const [opponentState, setOpponentState] = useRecoilState(opponentStateAtom);
+  const [opponentScore, setOpponentScore] = useRecoilState(opponentScoreAtom);
   const [res, setRes] = useRecoilState(resAtom);
   const [socket, setSocket] = useState(null);
   const [gameOn, setGameOn] = useState(false);
   const [role, setRole] = useState('');
-  const [finishedState, setFinishedState] = useState('');
+  const [round, setRound] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (opponentName && role) {
-      game();
+      setGameOn(true);
     }
   }, [opponentName, role]);
 
@@ -33,32 +37,45 @@ const HomeScreen = () => {
         playerName: name,
       });
 
-      newSocket.on("OpponentFound", (data) => {
+      setLoading(true);
+
+      newSocket.on("OpponentFound", async (data) => {
+        setLoading(false);
         setOpponentName(data.opponentName);
         setRole(data.role);
+        await Swal.fire({
+          title: "Opponent Found",
+          text: `Opponent: ${data.opponentName}. Starting the game...`,
+          icon: "info",
+          showConfirmButton: false,
+          timer: 2500
+        });
       });
 
-      newSocket.on("OpponentLeft", () => {
-        setFinishedState("opponentLeft");
-        Swal.fire({
-          title: "Opponent Left",
-          showCancelButton: false,
-        });
+      newSocket.on("OpponentLeft", async () => {
+        if (round) {
+          await Swal.fire({
+            title: "Opponent Left",
+            showCancelButton: false,
+          });
+        }
+        resetGame();
       });
 
       newSocket.on("Result", (data) => {
         setRes(data.res);
-      })
+      });
 
       newSocket.on("StateFromServer", (data) => {
         setOpponentState(data.state);
-      })
+      });
+
       setSocket(newSocket);
     }
   }, [name, socket]);
 
   const inputName = async () => {
-    const name = await Swal.fire({
+    const result = await Swal.fire({
       title: "Enter your name",
       input: "text",
       showCancelButton: true,
@@ -68,24 +85,82 @@ const HomeScreen = () => {
         }
       }
     });
-    return name;
+    return result;
   };
 
   const playButton = async () => {
-    const name = await inputName();
-
-    if (!name.isConfirmed) {
+    const result = await inputName();
+    if (!result.isConfirmed) {
       return;
     }
-
-    setName(name.value);
+    setName(result.value);
   };
 
-  const game = () => {
-    setGameOn(true);
+  const resetRound = () => {
+    setRole((prevRole) => (prevRole === 'R1' ? 'R2' : 'R1'));
+    setRound((prevRound) => prevRound + 1);
+    setState([0, 0, 0]);
+    setRes(null);
+    setOpponentState([0, 0, 0]);
   };
 
-  if (gameOn === false) {
+  const resetGame = () => {
+    window.location.reload();
+  };
+
+  const checkWinner = async () => {
+    if (round >= 1) {
+      if (opponentScore === 1) {
+        await Swal.fire({
+          title: "You lost the Game",
+          icon: "error"
+        });
+        resetGame();
+      }
+      if (score === 1) {
+        await Swal.fire({
+          title: "You won the Game",
+          icon: "success"
+        });
+        resetGame();
+      }
+    }
+  };
+
+  const result = async () => {
+    if (res === false) {
+      await Swal.fire({
+        title: "You won the Round",
+        icon: "success",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      setScore((prevScore) => prevScore + 1);
+    } else if (res === true) {
+      await Swal.fire({
+        title: "You lost the Round",
+        icon: "error",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      setOpponentScore((prevScore) => prevScore + 1);
+    }
+    checkWinner();
+    resetRound();
+  };
+
+  if (!gameOn) {
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center h-screen">
+          <div className="flex flex-col justify-center items-center">
+            <CircularProgress />
+            <p className="text-white text-3xl">Finding an opponent...</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex justify-center">
         <div className="flex flex-col justify-center">
@@ -94,13 +169,14 @@ const HomeScreen = () => {
         </div>
       </div>
     );
-  } else if (gameOn === true) {
-    if (role === 'R1') {
-      return <DrawScreen socket={socket} />
-    } else if (role === 'R2') {
-      return <CopyScreen socket={socket} />
+  } else {
+    if (res === null) {
+      return role === 'R1' ? <DrawScreen socket={socket} /> : <CopyScreen socket={socket} />;
+    } else {
+      result();
+      return null;
     }
   }
-}
+};
 
 export default HomeScreen;
