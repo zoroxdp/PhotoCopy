@@ -29,7 +29,7 @@ const HomeScreen = () => {
 
   useEffect(() => {
     if (name && !socket) {
-      const newSocket = io("http://localhost:3000", {
+      const newSocket = io("https://photo-copy-backend.vercel.app:3000", {
         autoConnect: true,
       });
 
@@ -133,7 +133,7 @@ const HomeScreen = () => {
         title: "You won the Round",
         icon: "success",
         showConfirmButton: false,
-        timer: 1500,
+        timer: 1000,
       });
       setScore((prevScore) => prevScore + 1);
     } else if (res === true) {
@@ -141,7 +141,7 @@ const HomeScreen = () => {
         title: "You lost the Round",
         icon: "error",
         showConfirmButton: false,
-        timer: 1500,
+        timer: 1000,
       });
       setOpponentScore((prevScore) => prevScore + 1);
     }
