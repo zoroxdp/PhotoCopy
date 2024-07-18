@@ -1,18 +1,29 @@
 import { useEffect, useState } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
-import { stateAtom, opponentNameAtom } from '../data/atoms';
+import { DotLottieReact } from "@lottiefiles/dotlottie-react"
+import Swal from 'sweetalert2';
+import { stateAtom, opponentNameAtom, opponentStateAtom, opponentScoreAtom, scoreAtom } from '../data/atoms';
 import { Yellow, YellowLight, Blue, BlueLight, Pink, PinkLight } from '../data/images'
 import ImageBlender from '../components/ImageBlender';
 
-const CopyScreen = () => {
+const CopyScreen = ({ socket }) => {
 
   const [state, setState] = useRecoilState(stateAtom);
   const opponentName = useRecoilValue(opponentNameAtom);
+  const opponentState = useRecoilValue(opponentStateAtom);
+  const [opponentScore, setOpponentScore] = useRecoilState(opponentScoreAtom);
+  const [score, setScore] = useRecoilState(scoreAtom);
+  const [received, setReceived] = useState(false);
   const [layer, setLayer] = useState(0);
   const [isComplete, setComplete] = useState(false);
+  const [skipCount, setSkipCount] = useState(true);
 
   useEffect(() => {
-    console.log(state);
+    if (skipCount) setSkipCount(false);
+    if (!skipCount) setReceived(true);
+  }, [opponentState]);
+
+  useEffect(() => {
     if (state[0] !== 0 && state[1] !== 0 && state[2] !== 0) {
       setComplete(true);
     } else {
@@ -39,7 +50,22 @@ const CopyScreen = () => {
   };
 
   const submit = () => {
-    console.log("Hello");
+    const flag = opponentState.toString() == state.toString();
+    if (flag === true) {
+      socket.socket.emit("Result", { res: true })
+      setScore(score + 1);
+      Swal.fire({
+        title: "You got it right",
+        icon: "success"
+      });
+    } else {
+      socket.socket.emit("Result", { res: false })
+      setOpponentScore(opponentScore + 1);
+      Swal.fire({
+        title: "You got it wrong",
+        icon: "error"
+      })
+    }
   }
 
   const renderShapes = () => {
@@ -71,23 +97,33 @@ const CopyScreen = () => {
     return shapesList;
   }
 
-  return (
-    <div className="flex justify-center">
-      <div className="flex flex-col justify-center items-center">
-        <div className="text-4xl text-center text-white">Copy It...</div>
-        <div className="flex justify-center my-8">
-          <div className="border h-38 w-38 p-2"><ImageBlender state={state} /></div>
-          <img className="h-24 w-14 mt-6" src={`/L${layer}.svg`} alt="level" />
-          <div className="border h-38 w-38 p-2 ml"><ImageBlender state={state} /></div>
+  if (received === true) {
+    return (
+      <div className="flex justify-center">
+        <div className="flex flex-col justify-center items-center">
+          <div className="text-4xl text-center text-white">Copy It...</div>
+          <div className="flex justify-center my-8">
+            <div className="border h-38 w-38 p-2"><ImageBlender state={opponentState} /></div>
+            <img className="h-24 w-14 mt-6" src={`/L${layer}.svg`} alt="level" />
+            <div className="border h-38 w-38 p-2 ml"><ImageBlender state={state} /></div>
+          </div>
+          <div className="grid grid-cols-4 my-2">
+            {renderShapes()}
+          </div>
+          <img src="/Submit.svg" className={`mt-4 w-16 h-16 ${isComplete ? 'visible' : 'invisible'}`} onClick={submit} />
         </div>
-        <div className="grid grid-cols-4 my-2">
-          {renderShapes()}
-        </div>
-        <img src="/Submit.svg" className={`mt-4 w-16 h-16 ${isComplete ? 'visible' : 'invisible'}`} onClick={submit} />
+      </div
+      >
+    )
+  }
+  else if (received === false) {
+    return (
+      <div className='flex flex-col justify-center items-center'>
+        <DotLottieReact className="w-48 h-48" src="/Waiting.lottie" loop autoplay />
+        <div className="text-white text-4xl text-center">Wait while {opponentName} is drawing...</div>
       </div>
-    </div
-    >
-  )
+    )
+  }
 }
 
 export default CopyScreen;

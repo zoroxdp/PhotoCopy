@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useRecoilState } from 'recoil';
-import { nameAtom, opponentNameAtom } from '../data/atoms';
-import { useNavigate } from 'react-router-dom';
+import { nameAtom, opponentNameAtom, opponentStateAtom, resAtom } from '../data/atoms';
 import { io } from 'socket.io-client';
 import { Button } from '@mui/material';
 import Swal from 'sweetalert2';
+import DrawScreen from './DrawScreen';
+import CopyScreen from './CopyScreen';
 
 const HomeScreen = () => {
-  const navigate = useNavigate();
-  const [playerName, setPlayerName] = useRecoilState(nameAtom);
+  const [name, setName] = useRecoilState(nameAtom);
   const [opponentName, setOpponentName] = useRecoilState(opponentNameAtom);
+  const [opponentState, setOpponentState] = useRecoilState(opponentStateAtom);
+  const [res, setRes] = useRecoilState(resAtom);
   const [socket, setSocket] = useState(null);
   const [gameOn, setGameOn] = useState(false);
   const [role, setRole] = useState('');
@@ -22,13 +24,13 @@ const HomeScreen = () => {
   }, [opponentName, role]);
 
   useEffect(() => {
-    if (playerName && !socket) {
+    if (name && !socket) {
       const newSocket = io("http://localhost:3000", {
         autoConnect: true,
       });
 
       newSocket.emit("request_to_play", {
-        playerName: playerName,
+        playerName: name,
       });
 
       newSocket.on("OpponentFound", (data) => {
@@ -44,9 +46,16 @@ const HomeScreen = () => {
         });
       });
 
+      newSocket.on("Result", (data) => {
+        setRes(data.res);
+      })
+
+      newSocket.on("StateFromServer", (data) => {
+        setOpponentState(data.state);
+      })
       setSocket(newSocket);
     }
-  }, [playerName, socket]);
+  }, [name, socket]);
 
   const inputName = async () => {
     const name = await Swal.fire({
@@ -69,20 +78,14 @@ const HomeScreen = () => {
       return;
     }
 
-    setPlayerName(name.value);
+    setName(name.value);
   };
 
   const game = () => {
-    console.log(role, playerName);
     setGameOn(true);
-    if (role === "R1") {
-      navigate('/draw');
-    } else {
-      navigate('/guess');
-    }
   };
 
-  if (!gameOn) {
+  if (gameOn === false) {
     return (
       <div className="flex justify-center">
         <div className="flex flex-col justify-center">
@@ -91,9 +94,12 @@ const HomeScreen = () => {
         </div>
       </div>
     );
-  }
-  else {
-    return <div className="text-white">Hello</div>;
+  } else if (gameOn === true) {
+    if (role === 'R1') {
+      return <DrawScreen socket={socket} />
+    } else if (role === 'R2') {
+      return <CopyScreen socket={socket} />
+    }
   }
 }
 
