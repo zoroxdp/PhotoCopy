@@ -1,4 +1,4 @@
-## To Install
+## To Install and Setup
 
 1. Ensure Node.js is installed
 2. Clone this repository - `git clone https://github.com/zoroxdp/PhotoCopy.git`
