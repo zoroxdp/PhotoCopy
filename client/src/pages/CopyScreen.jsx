@@ -21,7 +21,7 @@ const CopyScreen = ({ socket }) => {
   useEffect(() => {
     if (opponentState.every(layer => layer !== 0)) {
       setIsReceived(true);
-      setTimeout(() => setWait(true), 2000);
+      setTimeout(() => setWait(true), 2500);
     }
   }, [opponentState]);
 
