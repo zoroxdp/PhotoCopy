@@ -27,9 +27,10 @@ const HomeScreen = () => {
     }
   }, [opponentName, role]);
 
+
   useEffect(() => {
     if (name && !socket) {
-      const newSocket = io("https://photo-copy-backend.vercel.app:3000", {
+      const newSocket = io("http://localhost:3000", {
         autoConnect: true,
       });
 
@@ -45,15 +46,15 @@ const HomeScreen = () => {
         setRole(data.role);
         await Swal.fire({
           title: "Opponent Found",
-          text: `Opponent: ${data.opponentName}. Starting the game...`,
+          text: `Starting the game...`,
           icon: "info",
           showConfirmButton: false,
-          timer: 2500
+          timer: 1000
         });
       });
 
       newSocket.on("OpponentLeft", async () => {
-        if (round) {
+        if (gameOn === false) {
           await Swal.fire({
             title: "Opponent Left",
             showCancelButton: false,
@@ -97,7 +98,12 @@ const HomeScreen = () => {
   };
 
   const resetRound = () => {
-    setRole((prevRole) => (prevRole === 'R1' ? 'R2' : 'R1'));
+    if (role === 'R1') {
+      setRole('R2');
+    } else if (role === 'R2') {
+      setRole('R1');
+    }
+
     setRound((prevRound) => prevRound + 1);
     setState([0, 0, 0]);
     setRes(null);
@@ -109,15 +115,17 @@ const HomeScreen = () => {
   };
 
   const checkWinner = async () => {
-    if (round >= 1) {
-      if (opponentScore === 1) {
+    if (round >= 2) {
+      if (opponentScore === 2) {
+        setGameOn(false);
         await Swal.fire({
           title: "You lost the Game",
           icon: "error"
         });
         resetGame();
       }
-      if (score === 1) {
+      if (score === 2) {
+        setGameOn(false);
         await Swal.fire({
           title: "You won the Game",
           icon: "success"
@@ -127,27 +135,27 @@ const HomeScreen = () => {
     }
   };
 
-  const result = async () => {
+  useEffect(() => {
     if (res === false) {
-      await Swal.fire({
+      setScore((prevScore) => prevScore + 1);
+      Swal.fire({
         title: "You won the Round",
         icon: "success",
         showConfirmButton: false,
         timer: 1000,
       });
-      setScore((prevScore) => prevScore + 1);
     } else if (res === true) {
-      await Swal.fire({
+      setOpponentScore((prevScore) => prevScore + 1);
+      Swal.fire({
         title: "You lost the Round",
         icon: "error",
         showConfirmButton: false,
         timer: 1000,
       });
-      setOpponentScore((prevScore) => prevScore + 1);
     }
-    checkWinner();
     resetRound();
-  };
+    checkWinner();
+  }, [res])
 
   if (!gameOn) {
     if (loading) {
@@ -173,7 +181,6 @@ const HomeScreen = () => {
     if (res === null) {
       return role === 'R1' ? <DrawScreen socket={socket} /> : <CopyScreen socket={socket} />;
     } else {
-      result();
       return null;
     }
   }

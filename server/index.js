@@ -1,16 +1,8 @@
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 
-const httpServer = createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('PhotoCopy!');
-});
-
-const PORT = 3000;
-
-httpServer.listen(PORT);
-
-const io = new Server(httpServer);
+const httpServer = createServer();
+const io = new Server(httpServer, { cors: "http://localhost:5173/", });
 
 const allPlayers = {};
 const allRooms = [];
@@ -24,7 +16,6 @@ io.on("connection", (socket) => {
 
   socket.on("request_to_play", (data) => {
     const player1 = allPlayers[socket.id];
-    console.log(player1);
     player1.name = data.playerName;
 
     let player2;
@@ -97,3 +88,4 @@ io.on("connection", (socket) => {
   });
 });
 
+httpServer.listen(3000);
