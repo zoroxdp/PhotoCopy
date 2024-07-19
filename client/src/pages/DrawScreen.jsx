@@ -16,7 +16,7 @@ const DrawScreen = ({ socket }) => {
   const [isSent, setSent] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setWait(true), 2000);
+    const timer = setTimeout(() => setWait(true), 2500);
 
     setComplete(state.every(layer => layer !== 0));
 

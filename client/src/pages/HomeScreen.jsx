@@ -49,7 +49,7 @@ const HomeScreen = () => {
           text: `Starting the game...`,
           icon: "info",
           showConfirmButton: false,
-          timer: 1000
+          timer: 1200
         });
       });
 
@@ -103,7 +103,6 @@ const HomeScreen = () => {
     } else if (role === 'R2') {
       setRole('R1');
     }
-
     setRound((prevRound) => prevRound + 1);
     setState([0, 0, 0]);
     setRes(null);
@@ -111,7 +110,16 @@ const HomeScreen = () => {
   };
 
   const resetGame = () => {
-    window.location.reload();
+    setName(null);
+    setGameOn(false);
+    setSocket(null);
+    setOpponentName(null);
+    setOpponentState([0, 0, 0]);
+    setRes(null);
+    setRound(1);
+    setScore(0);
+    setOpponentScore(0);
+    setRole('');
   };
 
   const checkWinner = async () => {
@@ -120,7 +128,9 @@ const HomeScreen = () => {
         setGameOn(false);
         await Swal.fire({
           title: "You lost the Game",
-          icon: "error"
+          icon: "error",
+          showConfirmButton: false,
+          timer: 2500,
         });
         resetGame();
       }
@@ -128,7 +138,9 @@ const HomeScreen = () => {
         setGameOn(false);
         await Swal.fire({
           title: "You won the Game",
-          icon: "success"
+          icon: "success",
+          showConfirmButton: false,
+          timer: 2500,
         });
         resetGame();
       }
@@ -136,13 +148,15 @@ const HomeScreen = () => {
   };
 
   useEffect(() => {
+    checkWinner();
+    resetRound();
     if (res === false) {
       setScore((prevScore) => prevScore + 1);
       Swal.fire({
         title: "You won the Round",
         icon: "success",
         showConfirmButton: false,
-        timer: 1000,
+        timer: 1800,
       });
     } else if (res === true) {
       setOpponentScore((prevScore) => prevScore + 1);
@@ -150,11 +164,9 @@ const HomeScreen = () => {
         title: "You lost the Round",
         icon: "error",
         showConfirmButton: false,
-        timer: 1000,
+        timer: 1800,
       });
     }
-    resetRound();
-    checkWinner();
   }, [res])
 
   if (!gameOn) {
