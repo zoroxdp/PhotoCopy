@@ -12,4 +12,4 @@
 5. Start the server and client in two different windows/instances of terminal:
     1. Start the server: `node index.js` in the server directory
     2. Start the client: `npm run dev` in the client directory
-7. Visit http://localhost:5173 in a browser and click play the game, but ensure that port 3000 is not preoccupied.
+7. Visit http://localhost:5173 in a browser and click play the game, but ensure that ports 3000 and 5173 are not preoccupied.

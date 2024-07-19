@@ -71,7 +71,7 @@ const CopyScreen = ({ socket }) => {
       <div className="flex flex-col justify-center items-center">
         {wait ? (
           <>
-            <div className="text-4xl text-center text-white">Copy the Drawing</div>
+            <div className="text-4xl text-center text-white">Copy the Pattern</div>
             <div className="mt-6">
               <CountdownCircleTimer
                 isPlaying
